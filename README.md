@@ -5,6 +5,6 @@ This is the repository for SpringStar, the Apple Vision Pro application for CSC4
 ## Documentation
 [Team Charter](https://docs.google.com/document/d/17RXseEjljZRAriehd5fjK4ju5CE7zJero_gJ3bUrExI/edit?usp=sharing)
 
-[Requirements Documents](https://docs.google.com/document/d/1uEVqHaJ5FRD_foPfneRRSufuUgzMKfEhM2bbXWMyP1E/edit?usp=sharing)
+[Requirements Document](https://docs.google.com/document/d/1uEVqHaJ5FRD_foPfneRRSufuUgzMKfEhM2bbXWMyP1E/edit?usp=sharing)
 
 

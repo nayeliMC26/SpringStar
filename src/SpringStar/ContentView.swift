@@ -12,18 +12,36 @@ import Combine
 // This code will not go to production, this is for exploratory purposes
 struct ContentView: View {
     @State private var springEntity: ModelEntity?
+    @State private var cylinderEntity: ModelEntity?
     @State private var pitch: Float = 0.05
     @State private var increasing = true
     @State private var timerCancellable: Cancellable?
 
     var body: some View {
         RealityView { content in
+            let cyl = Cylinder(height: 0.25, radius: 0.125)
+            print("Volume: ", cyl.volume)
+            print("Lateral Surface Area: ", cyl.lateralSurfaceArea)
+            print("Total Surface Area: ", cyl.totalSurfaceArea)
+            
+            if cylinderEntity == nil {
+                do {
+                    let mesh = try cyl.Cylinder()
+                    let material = SimpleMaterial(color: .gray, isMetallic: true)
+                    let entity = ModelEntity(mesh:mesh, materials: [material])
+                    content.add(entity)
+                    cylinderEntity = entity
+                } catch {
+                    print("no cylinder ho", error)
+                }
+            }
+            
             if springEntity == nil {
                 do {
                     let mesh = try generateHelixMesh(pitch: pitch)
                     let material = SimpleMaterial(color: .gray, isMetallic: true)
                     let entity = ModelEntity(mesh: mesh, materials: [material])
-                    content.add(entity)
+                    //content.add(entity)
                     springEntity = entity
                 } catch {
                     print("Error generating spring mesh:", error)

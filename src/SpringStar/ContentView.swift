@@ -1,3 +1,9 @@
+//
+//  ContentView.swift
+//  SpringStar
+//
+//  Created by Jelly on 9/17/25.
+//
 import SwiftUI
 import RealityKit
 import Combine

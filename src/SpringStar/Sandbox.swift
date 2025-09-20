@@ -42,5 +42,34 @@ struct Cylinder {
 }
 
 struct Helix {
+    // This is the radius of the circles formed by the coil
+    var radius : Float
+    // Distance between each of the coils
+    var pitch : Float
+    // This is the number of full turns in helix (related to hegiht)
+    var coils : Int
+    // This is the radius of the tube mesh actually forming the helix
+    var tubeRadius : Float
+    // Each coil has some amount of segments so for example a very rigid cartoon like "spring" versus a smoother spring
+    var tubeSegments : Int
+    // 
+    var segmentsPerCoil : Int
+    
+    init(radius: Float, pitch: Float, coils: Int, tubeRadius: Float, tubeSegments: Int, segmentsPerCoil: Int) {
+        self.radius = radius
+        self.pitch = pitch
+        self.coils = coils
+        self.tubeRadius = tubeRadius
+        self.tubeSegments = tubeSegments
+        self.segmentsPerCoil = segmentsPerCoil
+        
+        let totalSegments = coils * segmentsPerCoil
+        for i in 0...totalSegments {
+            let t = Float(i) / Float(segmentsPerCoil) * (Float.pi * 2)
+            
+            let x = radius * cos(t)
+        }
+    }
 
 }
+

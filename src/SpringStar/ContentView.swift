@@ -29,7 +29,7 @@ struct ContentView: View {
                     let mesh = try cyl.Cylinder()
                     let material = SimpleMaterial(color: .gray, isMetallic: true)
                     let entity = ModelEntity(mesh:mesh, materials: [material])
-                    content.add(entity)
+                    //content.add(entity)
                     cylinderEntity = entity
                 } catch {
                     print("no cylinder ho", error)
@@ -41,7 +41,7 @@ struct ContentView: View {
                     let mesh = try generateHelixMesh(pitch: pitch)
                     let material = SimpleMaterial(color: .gray, isMetallic: true)
                     let entity = ModelEntity(mesh: mesh, materials: [material])
-                    //content.add(entity)
+                    content.add(entity)
                     springEntity = entity
                 } catch {
                     print("Error generating spring mesh:", error)

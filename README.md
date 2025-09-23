@@ -12,5 +12,7 @@ SpringStar will allow the user to see and experience how a spring-mass-dashpot s
 - [Team Charter](https://docs.google.com/document/d/17RXseEjljZRAriehd5fjK4ju5CE7zJero_gJ3bUrExI/edit?usp=sharing)
 
 - [Requirements Document](https://docs.google.com/document/d/1uEVqHaJ5FRD_foPfneRRSufuUgzMKfEhM2bbXWMyP1E/edit?usp=sharing)
+  
+- [Functional Specification](https://docs.google.com/document/d/1ggjs0D5-MZMZgkhu65p7901tq9E0oXkrYUs5d4vtzTc/edit?usp=sharing)
 
 

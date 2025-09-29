@@ -9,6 +9,8 @@ SpringStar will allow the user to see and experience how a spring-mass-dashpot s
 - [Jack Ashworth](https://github.com/jashworth5) | AR/Interaction Frontend Developer
 - [Maddie Ledesma](https://github.com/Maddie-Ledesma) | Simulation and Physics Backend Developer
 ## Documentation
+- [Project Proposal](https://drive.google.com/file/d/1dOH1cHIAgogWZiSPG3OPhvTXBVw3M0wb/view?usp=drive_link)
+
 - [Team Charter](https://docs.google.com/document/d/17RXseEjljZRAriehd5fjK4ju5CE7zJero_gJ3bUrExI/edit?usp=sharing)
 
 - [Requirements Document](https://docs.google.com/document/d/1uEVqHaJ5FRD_foPfneRRSufuUgzMKfEhM2bbXWMyP1E/edit?usp=sharing)

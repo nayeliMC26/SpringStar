@@ -102,48 +102,18 @@ struct SidebarView: View {
             Divider().padding(.vertical, 8)
 
             // --- Forcing Function Controls ---
-            Text("Forcing Function").font(.title3)
+            Text("System Modes").font(.title3)
 
-            // Picker to select type of forcing function
-            Picker("Forcing", selection: $viewModel.forcingType) {
-                Text("None").tag(SimulationViewModel.ForcingType.none)
-                Text("Sinusoid").tag(SimulationViewModel.ForcingType.sinusoid)
-                Text("Constant").tag(SimulationViewModel.ForcingType.constant)
+            // Picker now selects fixed (m,c,k) configurations per client request
+            Picker("Mode", selection: $viewModel.forcingType) {
+                Text("Overdamped").tag(SimulationViewModel.ForcingType.overdamped)
+                Text("Critically damped").tag(SimulationViewModel.ForcingType.criticallyDamped)
+                Text("Underdamped").tag(SimulationViewModel.ForcingType.underDamped)
+                Text("undamped").tag(SimulationViewModel.ForcingType.undamped)
             }
-            .pickerStyle(.menu)
-
-            // Dynamic UI based on the selected forcing type
-            switch viewModel.forcingType {
-            case .none:
-                EmptyView()
-
-            case .sinusoid:
-                // Sinusoidal forcing parameters
-                Text("Amplitude").font(.subheadline)
-                Slider(value: $viewModel.sinusoidAmplitude, in: 0...2, onEditingChanged: { _ in
-                    viewModel.applyForcingImmediately()
-                })
-                Text(String(format: "%.2f", viewModel.sinusoidAmplitude))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Text("Frequency (Hz)").font(.subheadline)
-                Slider(value: $viewModel.sinusoidFrequencyHz, in: 0.1...5, onEditingChanged: { _ in
-                    viewModel.applyForcingImmediately()
-                })
-                Text(String(format: "%.2f", viewModel.sinusoidFrequencyHz))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-            case .constant:
-                // Constant forcing parameter
-                Text("Force (N)").font(.subheadline)
-                Slider(value: $viewModel.constantForce, in: -5...5, onEditingChanged: { _ in
-                    viewModel.applyForcingImmediately()
-                })
-                Text(String(format: "%.2f", viewModel.constantForce))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            .pickerStyle(.segmented)
+            .onChange(of: viewModel.forcingType) { _, _ in
+                viewModel.applyForcingImmediately()
             }
 
             Divider().padding(.vertical, 8)

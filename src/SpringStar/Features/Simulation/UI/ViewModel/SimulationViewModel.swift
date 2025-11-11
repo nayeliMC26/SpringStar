@@ -43,8 +43,8 @@ public final class SimulationViewModel: ObservableObject {
 
     /// Selected damping preset type (under, over, etc.)
     @Published public var dampingPreset: DampingPreset = .under
-    /// Type of external forcing applied (none, sinusoid, constant)
-    @Published public var forcingType: ForcingType = .none
+    /// Quick selection that now sets fixed (m, c, k) presets per client request
+    @Published public var forcingType: ForcingType = .overdamped
 
     /// Parameters for sinusoidal forcing
     @Published public var sinusoidAmplitude: Float = 0
@@ -126,7 +126,26 @@ public final class SimulationViewModel: ObservableObject {
     /// Applies forcing parameters (amplitude, frequency, constant force) immediately.
     /// Placeholder for future implementation.
     public func applyForcingImmediately() {
-        // TODO: Send forcing update to physics calculator when available.
+        // Repurpose: Selecting a mode sets fixed (m, c, k) values.
+        switch forcingType {
+        case .overdamped:
+            mass = 1
+            damping = 4
+            stiffness = 3
+        case .criticallyDamped:
+            mass = 1
+            damping = 4
+            stiffness = 4
+        case .underDamped:
+            mass = 1
+            damping = 2
+            stiffness = 4
+        case .undamped:
+            mass = 1
+            damping = 0
+            stiffness = 1
+        }
+        applyParamsImmediately()
     }
 
     /// High-level damping behavior categories
@@ -135,9 +154,13 @@ public final class SimulationViewModel: ObservableObject {
         public var id: String { rawValue }
     }
 
-    /// External force types that can be applied to the system
+    /// Reused "Forcing" selector in UI now represents quick system presets.
+    /// Options set (m, c, k) directly per client request.
     public enum ForcingType: String, CaseIterable, Identifiable {
-        case none, sinusoid, constant
+        case overdamped
+        case criticallyDamped
+        case underDamped
+        case undamped
         public var id: String { rawValue }
     }
 
@@ -172,21 +195,10 @@ public final class SimulationViewModel: ObservableObject {
         applyParamsImmediately()
     }
 
-    /// Returns a forcing object representing the current user selection.
-    /// Used to configure how the system is driven (sinusoidal, constant, etc.).
+    /// Returns a forcing object. With new client requirements, external forcing is disabled.
+    /// The simulator runs unforced for these modes.
     private func controllerForcing() -> Forcing {
-        switch forcingType {
-        case .none:
-            return .none
-        case .sinusoid:
-            return .sinusoid(
-                amplitude: sinusoidAmplitude,
-                frequencyHz: sinusoidFrequencyHz,
-                phase: 0
-            )
-        case .constant:
-            return .constant(constantForce)
-        }
+        return .none
     }
 
     // MARK: - Preset Handling

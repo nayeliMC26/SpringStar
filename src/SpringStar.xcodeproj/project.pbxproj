@@ -29,7 +29,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A72A99042E88CFFD00C5E50E /* Exceptions for "SpringStar" folder in "SpringStar" target */ = {
+		A72A99042E88CFFD00C5E50E /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -42,7 +42,7 @@
 		47EC63432E7B6095001FCB13 /* SpringStar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				A72A99042E88CFFD00C5E50E /* Exceptions for "SpringStar" folder in "SpringStar" target */,
+				A72A99042E88CFFD00C5E50E /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
 			path = SpringStar;
 			sourceTree = "<group>";
@@ -243,7 +243,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = SpringStar/Assets.xcassets;
-				DEVELOPMENT_TEAM = 2Y232R5Q8T;
+				DEVELOPMENT_TEAM = "${TEAM_ID}";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "$(TARGET_NAME)/Info.plist";

@@ -14,6 +14,9 @@ import Combine
 /// Currently, it serves as a placeholder controller — the math engine is not yet implemented.
 public final class SimulationViewModel: ObservableObject {
 
+    // Suppresses applying presets when we auto-select a preset based on m,c,k changes
+    private var suppressPresetApply: Bool = false
+
     // MARK: - Input Parameters (bound to UI controls)
 
     /// Mass of the object (m)
@@ -114,6 +117,8 @@ public final class SimulationViewModel: ObservableObject {
     /// Placeholder for future simulation updates.
     public func applyParamsImmediately() {
         // TODO: Integrate with physics solver once implemented.
+        // Additionally, update preset selection based on current m, c, k.
+        updatePresetSelectionFromParams()
     }
 
     /// Temporarily adjusts the displayed height based on the initial displacement
@@ -127,6 +132,37 @@ public final class SimulationViewModel: ObservableObject {
     /// Placeholder for future implementation.
     public func applyForcingImmediately() {
         // TODO: Send forcing update to physics calculator when available.
+    }
+
+    /// Updates selectedPreset based on current m, c, k values.
+    /// If they exactly match a known preset's parameters, selects that preset; otherwise selects .none.
+    private func updatePresetSelectionFromParams() {
+        // Build the known presets using their default parameter values
+        let over = Presets.overdamped()
+        let crit = Presets.criticallyDamped()
+        let under = Presets.underdamped()
+        let undamped = Presets.undamped()
+
+        func matches(_ p: Preset) -> Bool {
+            return self.mass == p.params.mass && self.damping == p.params.damping && self.stiffness == p.params.stiffness
+        }
+
+        let newSelection: PresetType
+        if matches(over) { newSelection = .over }
+        else if matches(crit) { newSelection = .crit }
+        else if matches(under) { newSelection = .under }
+        else if matches(undamped) { newSelection = .undamped }
+        else { newSelection = .none }
+
+        // Only update if different to avoid needless churn
+        if newSelection != selectedPreset {
+            suppressPresetApply = true
+            selectedPreset = newSelection
+            // Clear suppression on the next runloop to avoid triggering applySelectedPreset
+            DispatchQueue.main.async { [weak self] in
+                self?.suppressPresetApply = false
+            }
+        }
     }
 
     /// High-level damping behavior categories
@@ -194,12 +230,14 @@ public final class SimulationViewModel: ObservableObject {
     /// Applies one of the predefined system presets.
     /// Each preset defines m, c, k, and initial conditions.
     public func applySelectedPreset() {
+        // If we are programmatically setting the preset based on slider changes,
+        // do not re-apply the preset values (which would overwrite user input).
+        if suppressPresetApply { return }
         switch selectedPreset {
         case .none:
             return
         case .over:
-            let p = Presets.overdamped()
-            applyPreset(p)
+            applyPreset(Presets.overdamped())
         case .crit:
             let p = Presets.criticallyDamped()
             applyPreset(p)

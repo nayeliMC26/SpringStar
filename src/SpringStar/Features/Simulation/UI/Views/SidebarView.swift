@@ -72,12 +72,13 @@ struct SidebarView: View {
             // --- Preset configurations for the spring system ---
             Picker("Presets", selection: $viewModel.selectedPreset) {
                 Text("None").tag(SimulationViewModel.PresetType.none)
-                Text("Over").tag(SimulationViewModel.PresetType.over)
-                Text("Crit").tag(SimulationViewModel.PresetType.crit)
-                Text("Under").tag(SimulationViewModel.PresetType.under)
+                Text("Overdamped").tag(SimulationViewModel.PresetType.over)
+                Text("Critically damped").tag(SimulationViewModel.PresetType.crit)
+                Text("Underdamped").tag(SimulationViewModel.PresetType.under)
                 Text("Undamped").tag(SimulationViewModel.PresetType.undamped)
             }
             .pickerStyle(.segmented)
+            .foregroundStyle(.primary)
             .onChange(of: viewModel.selectedPreset) { _, _ in
                 viewModel.applySelectedPreset()
             }

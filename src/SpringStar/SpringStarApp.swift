@@ -11,7 +11,8 @@ import SwiftUI
 struct SpringStarApp: App {
     var body: some Scene {
         WindowGroup {
-            SimulationView()
+            RootView()
+                .preferredColorScheme(.dark)
         }
         .windowStyle(.volumetric)
     }

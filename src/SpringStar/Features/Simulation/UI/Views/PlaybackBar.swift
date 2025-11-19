@@ -12,22 +12,27 @@ struct PlaybackBar: View {
     @ObservedObject var viewModel: SimulationViewModel
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             Button(action: { viewModel.isRunning ? viewModel.stop() : viewModel.start() }) {
                 Image(systemName: viewModel.isRunning ? "pause.fill" : "play.fill")
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.borderedProminent)
 
             Button(action: { viewModel.reset() }) {
                 Image(systemName: "backward.end.alt")
             }
             .buttonStyle(.bordered)
 
-            Slider(value: .constant(0.0))
-                .disabled(true)
-                .frame(maxWidth: 400)
+            Button(action: { viewModel.rewind(seconds: 10)}){
+                Image(systemName: "gobackward.10")
+            }
+            .buttonStyle(.bordered)
+            .help("Rewind 10 seconds")
+            
+            // Scrub cursor: maps 0...1 to a simple vertical line on the charts
+            Slider(value: $viewModel.playbackProgress, in: 0...1)
 
-            Text("00:00")
+            Text(viewModel.elapsedLabel)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

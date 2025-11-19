@@ -11,46 +11,62 @@
 import SwiftUI
 import RealityKit
 
-/// The main container view for the simulation scene.
 struct SimulationView: View {
-    /// The simulation’s view model, which manages both physics state and rendering.
     @StateObject private var viewModel = SimulationViewModel()
 
     var body: some View {
         ZStack {
-            // A vertical layout holding the 3D scene, sidebar, and playback controls
             VStack(alignment: .center, spacing: 12) {
-                // The main row: RealityKit simulation on the left, sidebar controls on the right
                 HStack(alignment: .top, spacing: 24) {
-
-                    // RealityKit 3D rendering area
                     RealityView { content in
-                        // Try to build or reuse the spring entity
                         if let entity = try? viewModel.renderer.makeEntityIfNeeded() {
-                            // Check if this spring matches the current renderer’s modelEntity
                             if viewModel.renderer.modelEntity === entity {
-                                // Position the sprong slightly back along the z-axis for visibility
                                 entity.position = [0, 0, -0.3]
-                                // Add the entity to the RealityKit content scene
                                 content.add(entity)
                             }
                         }
                     } update: { _ in
-                        // Once we have things to update they'll update here per frame
+                        // (Later) set entity.position.y = viewModel.height for live physics
                     }
                     .frame(width: 700, height: 700)
-                    .alignmentGuide(.top) { d in d[.top] }
 
-                    // Sidebar containing simulation controls and parameters
                     SidebarView(viewModel: viewModel)
-                        .frame(width: 600)
+                        .frame(width: 360)
                         .zIndex(2)
                 }
 
-                // Playback bar for time navigation and controls (below the main view)
+                // Playback controls
                 PlaybackBar(viewModel: viewModel)
-                    .padding(.top, 12)
-                    .zIndex(2)
+                    .padding(.top, 4)
+
+                // Graphs (react to sidebar toggles and parameters)
+                VStack(spacing: 10) {
+                    if viewModel.showDisplacement {
+                        LineGraphView(
+                            seconds: viewModel.timeSeries,
+                            series: [.init( name: "y(t)", values: viewModel.displacementSeries)],
+                            height: 160,
+                            cursor01: viewModel.playbackProgress
+                        )
+                    }
+                    if viewModel.showVelocity {
+                        LineGraphView(
+                            seconds: viewModel.timeSeries,
+                            series: [.init(name: "v(t)", values: viewModel.velocitySeries)],
+                            height: 160,
+                            cursor01: viewModel.playbackProgress
+                        )
+                    }
+                    if viewModel.showAcceleration {
+                        LineGraphView(
+                            seconds: viewModel.timeSeries,
+                            series: [.init(name: "a(t)", values: viewModel.accelerationSeries)],
+                            height: 160,
+                            cursor01: viewModel.playbackProgress
+                        )
+                    }
+                }
+                .padding(.top, 6)
 
                 Spacer(minLength: 0)
             }

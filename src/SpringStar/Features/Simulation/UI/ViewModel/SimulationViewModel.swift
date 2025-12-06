@@ -49,12 +49,22 @@ public final class SimulationViewModel: ObservableObject {
 
     /// Selected damping preset type (under, over, etc.)
     @Published public var dampingPreset: DampingPreset = .under
-    /// Type of external forcing applied (none, sinusoid, constant)
+    /// Type of external forcing applied (none, harmonic, step, impulse, constant)
     @Published public var forcingType: ForcingType = .none
 
-    /// Parameters for sinusoidal forcing
-    @Published public var sinusoidAmplitude: Float = 0
-    @Published public var sinusoidFrequencyHz: Float = 1
+    /// Parameters for harmonic forcing
+    @Published public var harmonicAmplitude: Float = 0
+    @Published public var harmonicFrequencyHz: Float = 1
+    @Published public var harmonicPhase: Float = 0
+    @Published public var harmonicWaveform: Forcing.HarmonicWaveform = .sine
+
+    /// Step forcing parameters
+    @Published public var stepMagnitude: Float = 0
+    @Published public var stepTime: Float = 0
+
+    /// Impulse forcing parameters
+    @Published public var impulseMagnitude: Float = 0
+    @Published public var impulseTime: Float = 0
 
     /// Constant external force magnitude
     @Published public var constantForce: Float = 0
@@ -70,6 +80,9 @@ public final class SimulationViewModel: ObservableObject {
 
     /// Base (rest) spring length used for rendering and reset position.
     private let baseRestLength: Float = 0.5
+    private let massRange: ClosedRange<Float> = 0.1...5.0
+    private let dampingRange: ClosedRange<Float> = 0.1...5.0
+    private let stiffnessRange: ClosedRange<Float> = 10.0...500.0
     private var simulator: MassSpringSimulator?
     private var simulationTimer: AnyCancellable?
     private var lastStepDate: Date?
@@ -127,15 +140,25 @@ public final class SimulationViewModel: ObservableObject {
         simulationTimer = nil
         lastStepDate = nil
         isRunning = false
-        mass = 0
-        damping = 0
-        stiffness = 0
-        initialDisplacement = 0
+        mass = 1.0
+        damping = 0.2
+        stiffness = 15.0
+        initialDisplacement = 0.1
         initialVelocity = 0
         selectedPreset = .none
-        height = max(0.05, baseRestLength)
-        displacement = 0
-        velocity = 0
+        forcingType = .none
+        harmonicAmplitude = 0
+        harmonicFrequencyHz = 1
+        harmonicPhase = 0
+        harmonicWaveform = .sine
+        stepMagnitude = 0
+        stepTime = 0
+        impulseMagnitude = 0
+        impulseTime = 0
+        constantForce = 0
+        height = max(0.05, baseRestLength + initialDisplacement)
+        displacement = initialDisplacement
+        velocity = initialVelocity
         simulator = nil
         renderer.updateHeight(height, restLength: baseRestLength)
     }
@@ -143,6 +166,7 @@ public final class SimulationViewModel: ObservableObject {
     /// Applies new mass/damping/stiffness values immediately.
     /// Placeholder for future simulation updates.
     public func applyParamsImmediately() {
+        _ = normalizedParams()
         updatePresetSelectionFromParams()
         updateSimulatorParams()
     }
@@ -157,8 +181,7 @@ public final class SimulationViewModel: ObservableObject {
         renderer.updateHeight(height, restLength: baseRestLength)
     }
 
-    /// Applies forcing parameters (amplitude, frequency, constant force) immediately.
-    /// Placeholder for future implementation.
+    /// Applies forcing parameters immediately to the running simulator (if any).
     public func applyForcingImmediately() {
         updateSimulatorParams()
     }
@@ -202,7 +225,7 @@ public final class SimulationViewModel: ObservableObject {
 
     /// External force types that can be applied to the system
     public enum ForcingType: String, CaseIterable, Identifiable {
-        case none, sinusoid, constant
+        case none, harmonic, step, impulse, constant
         public var id: String { rawValue }
     }
 
@@ -238,17 +261,22 @@ public final class SimulationViewModel: ObservableObject {
     }
 
     /// Returns a forcing object representing the current user selection.
-    /// Used to configure how the system is driven (sinusoidal, constant, etc.).
+    /// Used to configure how the system is driven (harmonic, step, impulse, constant, etc.).
     private func controllerForcing() -> Forcing {
         switch forcingType {
         case .none:
             return .none
-        case .sinusoid:
-            return .sinusoid(
-                amplitude: sinusoidAmplitude,
-                frequencyHz: sinusoidFrequencyHz,
-                phase: 0
+        case .harmonic:
+            return .harmonic(
+                amplitude: harmonicAmplitude,
+                frequencyHz: harmonicFrequencyHz,
+                phase: harmonicPhase,
+                waveform: harmonicWaveform
             )
+        case .step:
+            return .step(magnitude: stepMagnitude, time: stepTime)
+        case .impulse:
+            return .impulse(magnitude: impulseMagnitude, time: impulseTime)
         case .constant:
             return .constant(constantForce)
         }
@@ -281,9 +309,13 @@ public final class SimulationViewModel: ObservableObject {
 
     /// Assigns parameters from a specific preset to the current model.
     private func applyPreset(_ preset: Preset) {
-        mass = preset.params.mass
-        damping = preset.params.damping
-        stiffness = preset.params.stiffness
+        let clampedMass = clampToRange(preset.params.mass, massRange)
+        let clampedDamping = clampToRange(preset.params.damping, dampingRange)
+        let clampedStiffness = clampToRange(preset.params.stiffness, stiffnessRange)
+
+        mass = clampedMass
+        damping = clampedDamping
+        stiffness = clampedStiffness
         initialDisplacement = preset.y0
         initialVelocity = preset.v0
 
@@ -295,11 +327,26 @@ public final class SimulationViewModel: ObservableObject {
 
     // MARK: - Simulation plumbing
 
+    private func clampToRange(_ value: Float, _ range: ClosedRange<Float>) -> Float {
+        min(max(value, range.lowerBound), range.upperBound)
+    }
+
+    private func normalizedParams() -> (Float, Float, Float) {
+        let m = clampToRange(mass, massRange)
+        let c = clampToRange(damping, dampingRange)
+        let k = clampToRange(stiffness, stiffnessRange)
+        if m != mass { mass = m }
+        if c != damping { damping = c }
+        if k != stiffness { stiffness = k }
+        return (m, c, k)
+    }
+
     private func currentSystemParams() -> SystemParams {
-        SystemParams(
-            mass: mass,
-            damping: damping,
-            stiffness: stiffness,
+        let (m, c, k) = normalizedParams()
+        return SystemParams(
+            mass: m,
+            damping: c,
+            stiffness: k,
             restLength: baseRestLength,
             forcing: controllerForcing()
         )

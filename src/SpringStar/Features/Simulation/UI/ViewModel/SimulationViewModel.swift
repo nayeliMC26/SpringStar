@@ -10,8 +10,7 @@ import Combine
 
 /// View model for the spring–mass–damper simulation.
 /// Acts as the bridge between the SwiftUI interface (Sidebar, PlaybackBar)
-/// and the underlying RealityKit renderer or simulation logic.
-/// Currently, it serves as a placeholder controller — the math engine is not yet implemented.
+/// and the underlying RealityKit renderer and physics simulator.
 public final class SimulationViewModel: ObservableObject {
 
     // Suppresses applying presets when we auto-select a preset based on m,c,k changes
@@ -36,6 +35,10 @@ public final class SimulationViewModel: ObservableObject {
 
     /// The current “height” of the simulated mass, used to update the visual spring.
     @Published public private(set) var height: Float
+    /// Latest displacement (x) from the simulator
+    @Published public private(set) var displacement: Float
+    /// Latest velocity (v) from the simulator
+    @Published public private(set) var velocity: Float
 
     // MARK: - UI State Flags
 
@@ -67,6 +70,10 @@ public final class SimulationViewModel: ObservableObject {
 
     /// Base (rest) spring length used for rendering and reset position.
     private let baseRestLength: Float = 0.5
+    private var simulator: MassSpringSimulator?
+    private var simulationTimer: AnyCancellable?
+    private var lastStepDate: Date?
+    private let tickInterval: TimeInterval = 1.0 / 60.0
 
     public init() {
         // Create a default spring renderer with geometric parameters.
@@ -85,24 +92,40 @@ public final class SimulationViewModel: ObservableObject {
 
         // Derived display height for initial visual position.
         height = max(0.05, baseRestLength + y0)
+        displacement = y0
+        velocity = v0
         isRunning = false
     }
 
     /// Starts the simulation.
-    /// (Currently just toggles state — no physics integration yet.)
     public func start() {
         guard !isRunning else { return }
+        simulator = makeSimulatorWithCurrentInputs()
+        lastStepDate = Date()
+        updateOutputsFromSimulator()
+
+        simulationTimer = Timer.publish(every: tickInterval, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] timestamp in
+                self?.stepSimulation(at: timestamp)
+            }
         isRunning = true
     }
 
     /// Stops the simulation (pauses or halts motion).
     public func stop() {
+        simulationTimer?.cancel()
+        simulationTimer = nil
+        lastStepDate = nil
         isRunning = false
     }
 
     /// Resets all parameters and state back to zero/defaults.
     /// Primarily used by the Reset button in the UI.
     public func reset() {
+        simulationTimer?.cancel()
+        simulationTimer = nil
+        lastStepDate = nil
         isRunning = false
         mass = 0
         damping = 0
@@ -111,14 +134,17 @@ public final class SimulationViewModel: ObservableObject {
         initialVelocity = 0
         selectedPreset = .none
         height = max(0.05, baseRestLength)
+        displacement = 0
+        velocity = 0
+        simulator = nil
+        renderer.updateHeight(height, restLength: baseRestLength)
     }
 
     /// Applies new mass/damping/stiffness values immediately.
     /// Placeholder for future simulation updates.
     public func applyParamsImmediately() {
-        // TODO: Integrate with physics solver once implemented.
-        // Additionally, update preset selection based on current m, c, k.
         updatePresetSelectionFromParams()
+        updateSimulatorParams()
     }
 
     /// Temporarily adjusts the displayed height based on the initial displacement
@@ -126,12 +152,15 @@ public final class SimulationViewModel: ObservableObject {
     public func previewInitialConditionsIfIdle() {
         guard !isRunning else { return }
         height = max(0.05, baseRestLength + initialDisplacement)
+        displacement = initialDisplacement
+        velocity = initialVelocity
+        renderer.updateHeight(height, restLength: baseRestLength)
     }
 
     /// Applies forcing parameters (amplitude, frequency, constant force) immediately.
     /// Placeholder for future implementation.
     public func applyForcingImmediately() {
-        // TODO: Send forcing update to physics calculator when available.
+        updateSimulatorParams()
     }
 
     /// Updates selectedPreset based on current m, c, k values.
@@ -260,5 +289,61 @@ public final class SimulationViewModel: ObservableObject {
 
         // Update visual preview (spring height) for user feedback.
         height = max(0.05, preset.params.restLength + preset.y0)
+        renderer.updateHeight(height, restLength: preset.params.restLength)
+        updateSimulatorParams(resetState: true)
+    }
+
+    // MARK: - Simulation plumbing
+
+    private func currentSystemParams() -> SystemParams {
+        SystemParams(
+            mass: mass,
+            damping: damping,
+            stiffness: stiffness,
+            restLength: baseRestLength,
+            forcing: controllerForcing()
+        )
+    }
+
+    private func makeSimulatorWithCurrentInputs() -> MassSpringSimulator {
+        var sim = MassSpringSimulator(params: currentSystemParams())
+        sim.reset(time: 0, displacement: initialDisplacement, velocity: initialVelocity)
+        return sim
+    }
+
+    private func stepSimulation(at timestamp: Date) {
+        guard isRunning else { return }
+        guard var sim = simulator else {
+            stop()
+            return
+        }
+
+        let previousDate = lastStepDate ?? timestamp
+        lastStepDate = timestamp
+        let dtSeconds = max(timestamp.timeIntervalSince(previousDate), tickInterval)
+        let clampedDt = Float(min(dtSeconds, 0.05))
+
+        sim.step(dt: clampedDt)
+        simulator = sim
+        updateOutputsFromSimulator()
+    }
+
+    private func updateOutputsFromSimulator() {
+        guard let sim = simulator else { return }
+        displacement = sim.state.displacement
+        velocity = sim.state.velocity
+        height = max(0.05, baseRestLength + displacement)
+        renderer.updateHeight(height, restLength: baseRestLength)
+    }
+
+    private func updateSimulatorParams(resetState: Bool = false) {
+        guard var sim = simulator else { return }
+        sim.params = currentSystemParams()
+        if resetState {
+            sim.reset(time: 0, displacement: initialDisplacement, velocity: initialVelocity)
+            lastStepDate = Date()
+        }
+        simulator = sim
+        updateOutputsFromSimulator()
     }
 }

@@ -81,7 +81,8 @@ public final class SimulationViewModel: ObservableObject {
     /// Base (rest) spring length used for rendering and reset position.
     private let baseRestLength: Float = 0.5
     private let massRange: ClosedRange<Float> = 0.1...5.0
-    private let dampingRange: ClosedRange<Float> = 0.1...5.0
+    // Updated to start from 0.0 to account for the undamped preset
+    private let dampingRange: ClosedRange<Float> = 0.0...5.0
     private let stiffnessRange: ClosedRange<Float> = 10.0...500.0
     private var simulator: MassSpringSimulator?
     private var simulationTimer: AnyCancellable?

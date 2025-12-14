@@ -82,4 +82,17 @@ public final class ProcSpringRenderer {
         }
         return modelEntity
     }
+
+    /// Scales the spring along its vertical axis to match a target height.
+    /// The mesh is modeled with its top at y = 0, so scaling keeps the top anchored.
+    /// - Parameters:
+    ///   - height: Desired total spring height (rest length + displacement).
+    ///   - restLength: Base rest length used for normalization.
+    public func updateHeight(_ height: Float, restLength: Float) {
+        guard let entity = modelEntity else { return }
+        let safeRest = max(restLength, 0.001)
+        let ratio = max(height, 0.01) / safeRest
+        let xzScale = entity.scale
+        entity.scale = SIMD3<Float>(xzScale.x, scaleFactor * ratio, xzScale.z)
+    }
 }

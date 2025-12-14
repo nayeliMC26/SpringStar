@@ -44,7 +44,7 @@ struct SidebarView: View {
 
             // Mass (m)
             Text("m").font(.title3).bold()
-            Slider(value: $viewModel.mass, in: 0.0...5.0, onEditingChanged: { _ in
+            Slider(value: $viewModel.mass, in: 0.1...5.0, onEditingChanged: { _ in
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.mass))
@@ -53,7 +53,7 @@ struct SidebarView: View {
 
             // Damping coefficient (c)
             Text("c").font(.title3).bold()
-            Slider(value: $viewModel.damping, in: 0.0...5.0, onEditingChanged: { _ in
+            Slider(value: $viewModel.damping, in: 0.1...5.0, onEditingChanged: { _ in
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.damping))
@@ -62,7 +62,7 @@ struct SidebarView: View {
 
             // Spring stiffness (k)
             Text("k").font(.title3).bold()
-            Slider(value: $viewModel.stiffness, in: 0.0...50.0, onEditingChanged: { _ in
+            Slider(value: $viewModel.stiffness, in: 10.0...500.0, onEditingChanged: { _ in
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.stiffness))
@@ -108,31 +108,87 @@ struct SidebarView: View {
             // Picker to select type of forcing function
             Picker("Forcing", selection: $viewModel.forcingType) {
                 Text("None").tag(SimulationViewModel.ForcingType.none)
-                Text("Sinusoid").tag(SimulationViewModel.ForcingType.sinusoid)
+                Text("Harmonic (sin/cos)").tag(SimulationViewModel.ForcingType.harmonic)
+                Text("Step").tag(SimulationViewModel.ForcingType.step)
+                Text("Impulse").tag(SimulationViewModel.ForcingType.impulse)
                 Text("Constant").tag(SimulationViewModel.ForcingType.constant)
             }
             .pickerStyle(.menu)
+            .onChange(of: viewModel.forcingType) { _, _ in
+                viewModel.applyForcingImmediately()
+            }
 
             // Dynamic UI based on the selected forcing type
             switch viewModel.forcingType {
             case .none:
                 EmptyView()
 
-            case .sinusoid:
-                // Sinusoidal forcing parameters
+            case .harmonic:
+                // Harmonic forcing parameters
                 Text("Amplitude").font(.subheadline)
-                Slider(value: $viewModel.sinusoidAmplitude, in: 0...2, onEditingChanged: { _ in
+                Slider(value: $viewModel.harmonicAmplitude, in: 0...5, onEditingChanged: { _ in
                     viewModel.applyForcingImmediately()
                 })
-                Text(String(format: "%.2f", viewModel.sinusoidAmplitude))
+                Text(String(format: "%.2f", viewModel.harmonicAmplitude))
                     .font(.caption)
                     .foregroundColor(.secondary)
 
                 Text("Frequency (Hz)").font(.subheadline)
-                Slider(value: $viewModel.sinusoidFrequencyHz, in: 0.1...5, onEditingChanged: { _ in
+                Slider(value: $viewModel.harmonicFrequencyHz, in: 0.1...5, onEditingChanged: { _ in
                     viewModel.applyForcingImmediately()
                 })
-                Text(String(format: "%.2f", viewModel.sinusoidFrequencyHz))
+                Text(String(format: "%.2f", viewModel.harmonicFrequencyHz))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("Phase (rad)").font(.subheadline)
+                Slider(value: $viewModel.harmonicPhase, in: -Float.pi...Float.pi, onEditingChanged: { _ in
+                    viewModel.applyForcingImmediately()
+                })
+                Text(String(format: "%.2f", viewModel.harmonicPhase))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Picker("Waveform", selection: $viewModel.harmonicWaveform) {
+                    Text("Sine").tag(Forcing.HarmonicWaveform.sine)
+                    Text("Cosine").tag(Forcing.HarmonicWaveform.cosine)
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: viewModel.harmonicWaveform) { _, _ in
+                    viewModel.applyForcingImmediately()
+                }
+
+            case .step:
+                Text("Step Magnitude (N)").font(.subheadline)
+                Slider(value: $viewModel.stepMagnitude, in: -5...5, onEditingChanged: { _ in
+                    viewModel.applyForcingImmediately()
+                })
+                Text(String(format: "%.2f", viewModel.stepMagnitude))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("Delta T (s)").font(.subheadline)
+                Slider(value: $viewModel.stepTime, in: 0...5, onEditingChanged: { _ in
+                    viewModel.applyForcingImmediately()
+                })
+                Text(String(format: "%.2f", viewModel.stepTime))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+            case .impulse:
+                Text("Impulse (N·s)").font(.subheadline)
+                Slider(value: $viewModel.impulseMagnitude, in: -5...5, onEditingChanged: { _ in
+                    viewModel.applyForcingImmediately()
+                })
+                Text(String(format: "%.2f", viewModel.impulseMagnitude))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("Delta T (s)").font(.subheadline)
+                Slider(value: $viewModel.impulseTime, in: 0...5, onEditingChanged: { _ in
+                    viewModel.applyForcingImmediately()
+                })
+                Text(String(format: "%.2f", viewModel.impulseTime))
                     .font(.caption)
                     .foregroundColor(.secondary)
 

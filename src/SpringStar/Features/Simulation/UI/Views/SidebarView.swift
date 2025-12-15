@@ -48,16 +48,16 @@ struct SidebarView: View {
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.mass))
-                .font(.caption)
+                .font(.headline)
                 .foregroundColor(.secondary)
 
             // Damping coefficient (c)
             Text("c").font(.title3).bold()
-            Slider(value: $viewModel.damping, in: 0.1...5.0, onEditingChanged: { _ in
+            Slider(value: $viewModel.damping, in: 0.0...5.0, onEditingChanged: { _ in
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.damping))
-                .font(.caption)
+                .font(.headline)
                 .foregroundColor(.secondary)
 
             // Spring stiffness (k)
@@ -66,7 +66,7 @@ struct SidebarView: View {
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.stiffness))
-                .font(.caption)
+                .font(.headline)
                 .foregroundColor(.secondary)
 
             // --- Preset configurations for the spring system ---
@@ -97,7 +97,7 @@ struct SidebarView: View {
             // Initial velocity slider
             Slider(value: $viewModel.initialVelocity, in: -1.0...1.0)
             Text("v0: " + String(format: "%.2f", viewModel.initialVelocity))
-                .font(.caption)
+                .font(.headline)
                 .foregroundColor(.secondary)
 
             Divider().padding(.vertical, 8)
@@ -130,7 +130,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.harmonicAmplitude))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
 
                 Text("Frequency (Hz)").font(.subheadline)
@@ -138,7 +138,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.harmonicFrequencyHz))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
 
                 Text("Phase (rad)").font(.subheadline)
@@ -146,7 +146,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.harmonicPhase))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
 
                 Picker("Waveform", selection: $viewModel.harmonicWaveform) {
@@ -164,7 +164,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.stepMagnitude))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
 
                 Text("Delta T (s)").font(.subheadline)
@@ -172,7 +172,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.stepTime))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
 
             case .impulse:
@@ -181,7 +181,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.impulseMagnitude))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
 
                 Text("Delta T (s)").font(.subheadline)
@@ -189,7 +189,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.impulseTime))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
 
             case .constant:
@@ -199,7 +199,7 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.constantForce))
-                    .font(.caption)
+                    .font(.headline)
                     .foregroundColor(.secondary)
             }
 

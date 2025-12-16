@@ -9,10 +9,19 @@ import SwiftUI
 
 @main
 struct SpringStarApp: App {
+    @State private var hasStarted = false
+
     var body: some Scene {
         WindowGroup {
-            SimulationView()
+            if hasStarted {
+                SimulationView()
+            } else {
+                WelcomeView {
+                    hasStarted = true
+                }
+            }
         }
         .windowStyle(.volumetric)
     }
 }
+

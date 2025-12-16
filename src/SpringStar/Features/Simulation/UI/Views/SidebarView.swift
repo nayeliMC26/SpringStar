@@ -213,6 +213,7 @@ struct SidebarView: View {
             Toggle("Velocity vs. Time", isOn: $viewModel.showVelocity)
             Toggle("Acceleration vs. Time", isOn: $viewModel.showAcceleration)
 
+
             // Help button aligned to the right
             HStack {
                 Spacer()

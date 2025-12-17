@@ -13,11 +13,16 @@ struct SpringStarApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if hasStarted {
+            ZStack {
                 SimulationView()
-            } else {
-                WelcomeView {
-                    hasStarted = true
+
+                // Present the welcome overlay until the user starts
+                if !hasStarted {
+                    WelcomeView {
+                        withAnimation { hasStarted = true }
+                    }
+                    .transition(.opacity)
+                    .zIndex(2)
                 }
             }
         }

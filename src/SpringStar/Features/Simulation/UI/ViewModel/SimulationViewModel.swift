@@ -139,6 +139,8 @@ public final class SimulationViewModel: ObservableObject {
     /// Starts the simulation.
     public func start() {
         guard !isRunning else { return }
+        // Starting a new run and clear any previous graph history to avoid overlap
+        graphStore.reset()
         playbackTime = 0
         isScrubbing = false
         simulator = makeSimulatorWithCurrentInputs()
@@ -200,6 +202,15 @@ public final class SimulationViewModel: ObservableObject {
         _ = normalizedParams()
         updatePresetSelectionFromParams()
         updateSimulatorParams()
+        // Prevent overlapping graph traces when parameters change by trimming samples that come after the current time/state
+        if isRunning, let sim = simulator {
+            let t = Double(sim.state.time)
+            graphStore.removeSamples(after: t)
+            playbackTime = min(playbackTime, graphStore.maxTime)
+        } else {
+            graphStore.reset()
+            playbackTime = 0
+        }
     }
 
     /// Temporarily adjusts the displayed height based on the initial displacement

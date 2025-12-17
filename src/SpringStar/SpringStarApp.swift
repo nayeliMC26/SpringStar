@@ -32,5 +32,3 @@ struct SpringStarApp: App {
         .windowStyle(.volumetric)
     }
 }
-
-

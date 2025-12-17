@@ -43,7 +43,7 @@ public final class SimulationViewModel: ObservableObject {
     // MARK: - UI State Flags
 
     /// Toggles for which graphs to display in the sidebar
-    @Published public var showDisplacement: Bool = true
+    @Published public var showDisplacement: Bool = false
     @Published public var showVelocity: Bool = false
     @Published public var showAcceleration: Bool = false
 

@@ -48,17 +48,17 @@ struct SidebarView: View {
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.mass))
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.headline)
+                .foregroundColor(.primary)
 
             // Damping coefficient (c)
             Text("c").font(.title3).bold()
-            Slider(value: $viewModel.damping, in: 0.1...5.0, onEditingChanged: { _ in
+            Slider(value: $viewModel.damping, in: 0.0...5.0, onEditingChanged: { _ in
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.damping))
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.headline)
+                .foregroundColor(.primary)
 
             // Spring stiffness (k)
             Text("k").font(.title3).bold()
@@ -66,8 +66,8 @@ struct SidebarView: View {
                 viewModel.applyParamsImmediately()
             })
             Text(String(format: "%.2f", viewModel.stiffness))
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.headline)
+                .foregroundColor(.primary)
 
             // --- Preset configurations for the spring system ---
             Picker("Presets", selection: $viewModel.selectedPreset) {
@@ -92,13 +92,13 @@ struct SidebarView: View {
             })
             Text("y0: " + String(format: "%.2f", viewModel.initialDisplacement))
                 .font(.title3)
-                .foregroundColor(.secondary)
+                .foregroundColor(.primary)
 
             // Initial velocity slider
             Slider(value: $viewModel.initialVelocity, in: -1.0...1.0)
             Text("v0: " + String(format: "%.2f", viewModel.initialVelocity))
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.headline)
+                .foregroundColor(.primary)
 
             Divider().padding(.vertical, 8)
 
@@ -130,24 +130,24 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.harmonicAmplitude))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
                 Text("Frequency (Hz)").font(.subheadline)
                 Slider(value: $viewModel.harmonicFrequencyHz, in: 0.1...5, onEditingChanged: { _ in
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.harmonicFrequencyHz))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
                 Text("Phase (rad)").font(.subheadline)
                 Slider(value: $viewModel.harmonicPhase, in: -Float.pi...Float.pi, onEditingChanged: { _ in
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.harmonicPhase))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
                 Picker("Waveform", selection: $viewModel.harmonicWaveform) {
                     Text("Sine").tag(Forcing.HarmonicWaveform.sine)
@@ -164,16 +164,16 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.stepMagnitude))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
                 Text("Delta T (s)").font(.subheadline)
                 Slider(value: $viewModel.stepTime, in: 0...5, onEditingChanged: { _ in
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.stepTime))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
             case .impulse:
                 Text("Impulse (N·s)").font(.subheadline)
@@ -181,16 +181,16 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.impulseMagnitude))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
                 Text("Delta T (s)").font(.subheadline)
                 Slider(value: $viewModel.impulseTime, in: 0...5, onEditingChanged: { _ in
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.impulseTime))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
             case .constant:
                 // Constant forcing parameter
@@ -199,8 +199,8 @@ struct SidebarView: View {
                     viewModel.applyForcingImmediately()
                 })
                 Text(String(format: "%.2f", viewModel.constantForce))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(.headline)
+                    .foregroundColor(.primary)
             }
 
             Divider().padding(.vertical, 8)

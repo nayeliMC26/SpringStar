@@ -15,31 +15,37 @@ struct GraphsPanel: View {
 
             // Graphs
             VStack(spacing: 12) {
-                if viewModel.showDisplacement {
-                    LineGraphView(
-                        samples: viewModel.graphStore.samples,
-                        metric: .displacement,
-                        playbackTime: viewModel.playbackTime,
-                        title: "Displacement"
-                    )
-                }
+                // If more than one of displacement/velocity is enabled, show combined view
+                let enabledCount = (viewModel.showDisplacement ? 1 : 0) + (viewModel.showVelocity ? 1 : 0)
 
-                if viewModel.showVelocity {
-                    LineGraphView(
-                        samples: viewModel.graphStore.samples,
-                        metric: .velocity,
+                if enabledCount > 1 {
+                    CombinedLineGraphView(
+                        graphStore: viewModel.graphStore,
                         playbackTime: viewModel.playbackTime,
-                        title: "Velocity"
+                        title: "Mass-Spring-Damper System Simulation (Runge-Kutta)",
+                        showDisplacement: viewModel.showDisplacement,
+                        showVelocity: viewModel.showVelocity
                     )
-                }
+                } else {
+                    if viewModel.showDisplacement {
+                        LineGraphView(
+                            samples: viewModel.graphStore.samples,
+                            metric: .displacement,
+                            playbackTime: viewModel.playbackTime,
+                            title: "Displacement"
+                        )
+                    }
 
-                if viewModel.showAcceleration {
-                    LineGraphView(
-                        samples: viewModel.graphStore.samples,
-                        metric: .acceleration,
-                        playbackTime: viewModel.playbackTime,
-                        title: "Acceleration"
-                    )
+                    if viewModel.showVelocity {
+                        LineGraphView(
+                            samples: viewModel.graphStore.samples,
+                            metric: .velocity,
+                            playbackTime: viewModel.playbackTime,
+                            title: "Velocity"
+                        )
+                    }
+
+                    // Acceleration view intentionally omitted to focus on displacement/velocity
                 }
             }
         }

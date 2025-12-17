@@ -211,7 +211,8 @@ struct SidebarView: View {
             // Toggles for displaying different simulation plots
             Toggle("Displacement vs. Time", isOn: $viewModel.showDisplacement)
             Toggle("Velocity vs. Time", isOn: $viewModel.showVelocity)
-            Toggle("Acceleration vs. Time", isOn: $viewModel.showAcceleration)
+            // Acceleration toggle commented out for debug/unimplemented
+            // Toggle("Acceleration vs. Time", isOn: $viewModel.showAcceleration)
 
 
             // Help button aligned to the right

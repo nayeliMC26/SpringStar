@@ -46,6 +46,59 @@ struct LineGraphView: View {
                 func y(_ v: Double) -> CGFloat {
                     size.height - CGFloat((v - minY) / (maxY - minY)) * size.height
                 }
+                
+                // Draw grid and ticks
+                let gridColor = Color(.sRGBLinear, white: 0.9, opacity: 1)
+
+                // Number of tick marks on each axis
+                let yTickCount = 4
+                let xTickCount = 6
+
+                // --- Y-axis grid lines and labels ---
+                for i in 0...yTickCount {
+                    // Compute the y-position of this gridline (evenly spaced vertically)
+                    let yy = CGFloat(i) / CGFloat(yTickCount) * size.height
+                    
+                    // Draw horizontal grid line
+                    var p = Path()
+                    p.move(to: CGPoint(x: 0, y: yy))
+                    p.addLine(to: CGPoint(x: size.width, y: yy))
+                    context.stroke(p, with: .color(gridColor), lineWidth: 1)
+
+                    // Compute the corresponding value for the y-axis label
+                    // (reverse order so maxY appears at top)
+                    let value = minY + Double(yTickCount - i) / Double(yTickCount) * (maxY - minY)
+                    let label = String(format: "%.2f", value)
+                    
+                    // Draw the y-axis label slightly above the grid line
+                    context.draw(
+                        Text(label).font(.caption2).foregroundColor(.secondary),
+                        at: CGPoint(x: 4, y: yy - 8)
+                    )
+                }
+
+                // --- X-axis grid lines and labels ---
+                for i in 0...xTickCount {
+                    // Compute the x-position of this gridline (evenly spaced horizontally)
+                    let xx = CGFloat(i) / CGFloat(xTickCount) * size.width
+                    
+                    // Draw vertical grid line
+                    var p = Path()
+                    p.move(to: CGPoint(x: xx, y: 0))
+                    p.addLine(to: CGPoint(x: xx, y: size.height))
+                    context.stroke(p, with: .color(gridColor), lineWidth: 1)
+
+                    // Compute the corresponding value for the x-axis label
+                    let t = minX + Double(i) / Double(xTickCount) * (maxX - minX)
+                    let label = String(format: "%.1f", t)
+                    
+                    // Draw the x-axis label near the bottom
+                    context.draw(
+                        Text(label).font(.caption2).foregroundColor(.secondary),
+                        at: CGPoint(x: xx, y: size.height - 10)
+                    )
+                }
+
 
                 var path = Path()
                 for (i, s) in samples.enumerated() {

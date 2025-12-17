@@ -43,7 +43,7 @@ public final class SimulationViewModel: ObservableObject {
     // MARK: - UI State Flags
 
     /// Toggles for which graphs to display in the sidebar
-    @Published public var showDisplacement: Bool = true
+    @Published public var showDisplacement: Bool = false
     @Published public var showVelocity: Bool = false
     @Published public var showAcceleration: Bool = false
 
@@ -72,6 +72,30 @@ public final class SimulationViewModel: ObservableObject {
     /// Currently selected overall preset (affects m, c, k)
     @Published public var selectedPreset: PresetType = .none
 
+    // MARK: - Graphing + Playback
+
+    let graphStore = GraphDataStore()
+
+    /// Playback cursor time (seconds). When running, this follows the simulator time.
+    /// When paused, the user can scrub this value.
+    @Published public var playbackTime: Double = 0
+
+    /// If true, the user is dragging the slider (we don't want to fight them)
+    @Published public var isScrubbing: Bool = false
+
+    /// Convenience
+    public var maxPlaybackTime: Double { graphStore.maxTime }
+
+    private func currentAcceleration(t: Float, x: Float, v: Float) -> Float {
+        let m = max(paramsMass(), 1e-6)
+        let c = damping
+        let k = stiffness
+        let F = controllerForcing().value(atTime: t)
+        return (F - c * v - k * x) / m
+    }
+
+    private func paramsMass() -> Float { max(mass, 1e-6) }
+
     // MARK: - Renderer
 
     /// Handles 3D visualization of the spring/mass.
@@ -87,6 +111,8 @@ public final class SimulationViewModel: ObservableObject {
     private var simulationTimer: AnyCancellable?
     private var lastStepDate: Date?
     private let tickInterval: TimeInterval = 1.0 / 60.0
+    /// Whether the simulator was running when the user began scrubbing
+    private var wasRunningOnScrubStart: Bool = false
 
     public init() {
         // Create a default spring renderer with geometric parameters.
@@ -113,6 +139,10 @@ public final class SimulationViewModel: ObservableObject {
     /// Starts the simulation.
     public func start() {
         guard !isRunning else { return }
+        // Starting a new run and clear any previous graph history to avoid overlap
+        graphStore.reset()
+        playbackTime = 0
+        isScrubbing = false
         simulator = makeSimulatorWithCurrentInputs()
         lastStepDate = Date()
         updateOutputsFromSimulator()
@@ -161,6 +191,9 @@ public final class SimulationViewModel: ObservableObject {
         velocity = initialVelocity
         simulator = nil
         renderer.updateHeight(height, restLength: baseRestLength)
+        graphStore.reset()
+        playbackTime = 0
+        isScrubbing = false
     }
 
     /// Applies new mass/damping/stiffness values immediately.
@@ -169,6 +202,15 @@ public final class SimulationViewModel: ObservableObject {
         _ = normalizedParams()
         updatePresetSelectionFromParams()
         updateSimulatorParams()
+        // Prevent overlapping graph traces when parameters change by trimming samples that come after the current time/state
+        if isRunning, let sim = simulator {
+            let t = Double(sim.state.time)
+            graphStore.removeSamples(after: t)
+            playbackTime = min(playbackTime, graphStore.maxTime)
+        } else {
+            graphStore.reset()
+            playbackTime = 0
+        }
     }
 
     /// Temporarily adjusts the displayed height based on the initial displacement
@@ -322,6 +364,11 @@ public final class SimulationViewModel: ObservableObject {
         // Update visual preview (spring height) for user feedback.
         height = max(0.05, preset.params.restLength + preset.y0)
         renderer.updateHeight(height, restLength: preset.params.restLength)
+        // Clear any existing graph history and reset playback cursor
+        graphStore.reset()
+        playbackTime = 0
+        isScrubbing = false
+
         updateSimulatorParams(resetState: true)
     }
 
@@ -372,8 +419,29 @@ public final class SimulationViewModel: ObservableObject {
 
         sim.step(dt: clampedDt)
         simulator = sim
+
+        // Update outputs (displacement/velocity/height + renderer)
         updateOutputsFromSimulator()
+
+        // --- Graph sample ---
+        let t = sim.state.time
+        let x = sim.state.displacement
+        let v = sim.state.velocity
+        let a = currentAcceleration(t: t, x: x, v: v)
+
+        graphStore.append(
+            time: Double(t),
+            displacement: Double(x),
+            velocity: Double(v),
+            acceleration: Double(a)
+        )
+
+        // Keep playback cursor following sim time unless user is scrubbing
+        if !isScrubbing {
+            playbackTime = Double(t)
+        }
     }
+
 
     private func updateOutputsFromSimulator() {
         guard let sim = simulator else { return }
@@ -393,4 +461,60 @@ public final class SimulationViewModel: ObservableObject {
         simulator = sim
         updateOutputsFromSimulator()
     }
+    
+    public func scrub(to time: Double) {
+        // Update playback cursor and display to the nearest recorded sample
+        playbackTime = max(0, min(time, maxPlaybackTime))
+
+        guard let s = graphStore.sample(at: playbackTime) else { return }
+
+        // Do not stop the underlying simulator while scrubbing
+        displacement = Float(s.displacement)
+        velocity = Float(s.velocity)
+        height = max(0.05, baseRestLength + displacement)
+        renderer.updateHeight(height, restLength: baseRestLength)
+    }
+
+    /// Call when the user begins dragging the scrubber.
+    public func beginScrub() {
+        wasRunningOnScrubStart = isRunning
+        isScrubbing = true
+    }
+
+    /// Call when the user finishes dragging the scrubber.
+    /// This will set the simulator to the selected sample and resume the sim if it was running.
+    public func endScrub() {
+        isScrubbing = false
+
+        guard let s = graphStore.sample(at: playbackTime) else { return }
+
+        // Trim recorded history beyond the chosen sample so we don't keep the future
+        // samples that would visually overlap with newly recorded samples when resuming
+        graphStore.removeSamples(after: s.time)
+
+        // Move simulator to the chosen recorded state so playback/resume makes sense.
+        simulator = makeSimulatorWithCurrentInputs()
+        simulator?.reset(time: Float(s.time), displacement: Float(s.displacement), velocity: Float(s.velocity))
+        updateOutputsFromSimulator()
+
+        if wasRunningOnScrubStart {
+            // Resume stepping while keeping current simulator state
+            lastStepDate = Date()
+            simulationTimer = Timer.publish(every: tickInterval, on: .main, in: .common)
+                .autoconnect()
+                .sink { [weak self] timestamp in
+                    self?.stepSimulation(at: timestamp)
+                }
+            isRunning = true
+        }
+    }
+
+    public func rewind(seconds: Double) {
+        scrub(to: playbackTime - seconds)
+    }
+
+    public func rewind10Seconds() {
+        rewind(seconds: 10)
+    }
+
 }

@@ -52,6 +52,11 @@ struct SimulationView: View {
                     .padding(.top, 12)
                     .zIndex(2)
 
+                // Graphs under playback bar
+                GraphsPanel(viewModel: viewModel)
+                    .padding(.top, 8)
+                    .zIndex(1)
+
                 Spacer(minLength: 0)
             }
         }

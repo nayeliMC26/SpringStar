@@ -116,9 +116,6 @@ public final class SimulationViewModel: ObservableObject {
     private var wasRunningOnScrubStart: Bool = false
 
     public init() {
-        // Create a default spring renderer with geometric parameters.
-        renderer = ProcSpringRenderer(radius: 0.08, coils: 10, tubeRadius: 0.004)
-
         // Default simulation parameters.
         mass = 1.0
         damping = 0.2
@@ -135,6 +132,10 @@ public final class SimulationViewModel: ObservableObject {
         displacement = y0
         velocity = v0
         isRunning = false
+        // Create the default spring renderer after stored properties are initialized
+        renderer = ProcSpringRenderer(radius: 0.08, coils: 10, tubeRadius: 0.004)
+        // Initialize renderer mass size
+        renderer.updateMass(mass)
     }
 
     /// Starts the simulation.
@@ -191,6 +192,8 @@ public final class SimulationViewModel: ObservableObject {
         displacement = initialDisplacement
         velocity = initialVelocity
         simulator = nil
+        // Ensure renderer reflects the reset mass visually
+        renderer.updateMass(mass)
         renderer.updateHeight(height, restLength: baseRestLength)
         graphStore.reset()
         playbackTime = 0
@@ -203,6 +206,8 @@ public final class SimulationViewModel: ObservableObject {
         _ = normalizedParams()
         updatePresetSelectionFromParams()
         updateSimulatorParams()
+        // Update renderer mass size whenever parameters change
+        renderer.updateMass(mass)
         // Prevent overlapping graph traces when parameters change by trimming samples that come after the current time/state
         if isRunning, let sim = simulator {
             let t = Double(sim.state.time)
@@ -365,6 +370,8 @@ public final class SimulationViewModel: ObservableObject {
         // Update visual preview (spring height) for user feedback.
         height = max(0.05, preset.params.restLength + preset.y0)
         renderer.updateHeight(height, restLength: preset.params.restLength)
+        // Ensure mass visual size reflects the newly applied preset mass
+        renderer.updateMass(mass)
         // Clear any existing graph history and reset playback cursor
         graphStore.reset()
         playbackTime = 0

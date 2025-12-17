@@ -111,6 +111,8 @@ public final class SimulationViewModel: ObservableObject {
     private var simulationTimer: AnyCancellable?
     private var lastStepDate: Date?
     private let tickInterval: TimeInterval = 1.0 / 60.0
+    /// Whether the simulator was running when the user began scrubbing
+    private var wasRunningOnScrubStart: Bool = false
 
     public init() {
         // Create a default spring renderer with geometric parameters.
@@ -137,7 +139,6 @@ public final class SimulationViewModel: ObservableObject {
     /// Starts the simulation.
     public func start() {
         guard !isRunning else { return }
-        graphStore.reset()
         playbackTime = 0
         isScrubbing = false
         simulator = makeSimulatorWithCurrentInputs()
@@ -352,6 +353,11 @@ public final class SimulationViewModel: ObservableObject {
         // Update visual preview (spring height) for user feedback.
         height = max(0.05, preset.params.restLength + preset.y0)
         renderer.updateHeight(height, restLength: preset.params.restLength)
+        // Clear any existing graph history and reset playback cursor
+        graphStore.reset()
+        playbackTime = 0
+        isScrubbing = false
+
         updateSimulatorParams(resetState: true)
     }
 
@@ -446,20 +452,50 @@ public final class SimulationViewModel: ObservableObject {
     }
     
     public func scrub(to time: Double) {
-        // pause while scrubbing for sanity
-        if isRunning { stop() }
-
+        // Update playback cursor and display to the nearest recorded sample
         playbackTime = max(0, min(time, maxPlaybackTime))
 
         guard let s = graphStore.sample(at: playbackTime) else { return }
 
-        // Reset simulator to nearest recorded sample.
-        simulator = makeSimulatorWithCurrentInputs()
-        simulator?.reset(time: Float(s.time),
-                         displacement: Float(s.displacement),
-                         velocity: Float(s.velocity))
+        // Do not stop the underlying simulator while scrubbing
+        displacement = Float(s.displacement)
+        velocity = Float(s.velocity)
+        height = max(0.05, baseRestLength + displacement)
+        renderer.updateHeight(height, restLength: baseRestLength)
+    }
 
+    /// Call when the user begins dragging the scrubber.
+    public func beginScrub() {
+        wasRunningOnScrubStart = isRunning
+        isScrubbing = true
+    }
+
+    /// Call when the user finishes dragging the scrubber.
+    /// This will set the simulator to the selected sample and resume the sim if it was running.
+    public func endScrub() {
+        isScrubbing = false
+
+        guard let s = graphStore.sample(at: playbackTime) else { return }
+
+        // Trim recorded history beyond the chosen sample so we don't keep the future
+        // samples that would visually overlap with newly recorded samples when resuming
+        graphStore.removeSamples(after: s.time)
+
+        // Move simulator to the chosen recorded state so playback/resume makes sense.
+        simulator = makeSimulatorWithCurrentInputs()
+        simulator?.reset(time: Float(s.time), displacement: Float(s.displacement), velocity: Float(s.velocity))
         updateOutputsFromSimulator()
+
+        if wasRunningOnScrubStart {
+            // Resume stepping while keeping current simulator state
+            lastStepDate = Date()
+            simulationTimer = Timer.publish(every: tickInterval, on: .main, in: .common)
+                .autoconnect()
+                .sink { [weak self] timestamp in
+                    self?.stepSimulation(at: timestamp)
+                }
+            isRunning = true
+        }
     }
 
     public func rewind(seconds: Double) {

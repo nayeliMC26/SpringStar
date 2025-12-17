@@ -56,5 +56,12 @@ final class GraphDataStore: ObservableObject {
     func reset() {
         samples.removeAll()
     }
+
+    /// Remove any recorded samples that occur strictly after `time`.
+    /// Useful when seeking back in history and then resuming the simulation,
+    /// so we don't end up with overlapping "future" traces.
+    func removeSamples(after time: Double) {
+        samples.removeAll { $0.time > time }
+    }
 }
 

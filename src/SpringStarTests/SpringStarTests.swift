@@ -5,9 +5,10 @@
 //  Created by Jelly on 9/17/25.
 //
 
-import Testing
-@testable import SpringStar
 import Foundation
+import Testing
+
+@testable import SpringStar
 
 final class SpringStarTests {
 
@@ -26,7 +27,7 @@ final class SpringStarTests {
         sim.reset(time: 0, displacement: 1, velocity: 0)
 
         let twoPi = Float.pi * 2
-        let totalTime: Float = twoPi // one period
+        let totalTime: Float = twoPi  // one period
         let dt: Float = 0.001
         let steps = Int(totalTime / dt)
         for _ in 0..<steps { sim.step(dt: dt) }
@@ -42,23 +43,31 @@ final class SpringStarTests {
     }
 
     /// Runs the simulation and returns (time, displacement, velocity) for each step
-    func runPresetTest(_ preset: Preset, dt: Float = 0.01, tEnd: Float = 10.0) -> [(Float, Float, Float)] {
+    func runPresetTest(_ preset: Preset, dt: Float = 0.01, tEnd: Float = 10.0)
+        -> [(Float, Float, Float)]
+    {
         var sim = MassSpringSimulator(params: preset.params)
         sim.reset(time: 0, displacement: preset.y0, velocity: preset.v0)
-        
+
         let steps = Int(tEnd / dt)
         var results: [(Float, Float, Float)] = [(0, preset.y0, preset.v0)]
-        
+
         for _ in 0..<steps {
             sim.step(dt: dt)
-            results.append((sim.state.time, sim.state.displacement, sim.state.velocity))
+            results.append(
+                (sim.state.time, sim.state.displacement, sim.state.velocity)
+            )
         }
-        
+
         return results
     }
 
     /// Format the results for comparison with the Python notebook provided by client
-    func resultsText(_ name: String, _ results: [(Float, Float, Float)], dt: Float = 0.01) -> String {
+    func resultsText(
+        _ name: String,
+        _ results: [(Float, Float, Float)],
+        dt: Float = 0.01
+    ) -> String {
         var text = "\n=== \(name) ===\nTime\tDisplacement\tVelocity\n"
         let interval = max(1, Int(1.0 / dt))
         for i in stride(from: 0, to: results.count, by: interval) {

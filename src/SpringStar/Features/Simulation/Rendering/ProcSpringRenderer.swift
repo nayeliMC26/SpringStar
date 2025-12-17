@@ -6,9 +6,10 @@
 
 //  A procedural spring renderer for RealityKit.
 //  This class dynamically generates and updates a 3D helical spring mesh.
-//
+// Assitance from Copilot for Mass rendering
 
 import RealityKit
+import UIKit
 import simd
 
 /// `ProcSpringRenderer` is responsible for creating and updating a 3D spring (helix) model procedurally.
@@ -33,6 +34,22 @@ public final class ProcSpringRenderer {
     
     /// A constant scaling factor applied to the final spring model.
     private let scaleFactor: Float = 0.85
+    
+    /// The mass entity attached to the bottom of the spring (if created).
+    private var massEntity: ModelEntity?
+
+    /// The original mesh height used when building the spring (used to position the mass).
+    private let meshHeight: Float = 0.5
+
+    /// Visual radius for the attached mass.
+    private let massRadius: Float = 0.06
+
+    /// Current visual scale factor derived from the mass parameter (cube-root scaling).
+    private var currentMassScale: Float = 1.0
+    
+    /// A constant scaling factor for the mass
+    private let massScaleFactor: Float = 0.45
+
 
     // MARK: - Initialization
     
@@ -79,6 +96,23 @@ public final class ProcSpringRenderer {
             
             // Store for later updates
             modelEntity = entity
+
+            // Create and attach a mass at the bottom of the spring.
+            // Position is set in the spring's local space (mesh built from y=0 down to -meshHeight).
+            let massMesh = MeshResource.generateSphere(radius: massRadius)
+            let massUIColor = UIColor(red: 252.0/255.0, green: 234.0/255.0, blue: 63.0/255.0, alpha: 1.0)
+            let massMaterial = SimpleMaterial(color: massUIColor, isMetallic: false)
+            let mass = ModelEntity(mesh: massMesh, materials: [massMaterial])
+            // Place at bottom of the unscaled mesh
+            mass.position = [0, -meshHeight, 0]
+            // Apply initial scale: incorporate currentMassScale and inverse parent scaling
+            let parentScale = entity.scale
+            let inv = SIMD3<Float>(parentScale.x != 0 ? 1.0 / parentScale.x : 1.0,
+                                   parentScale.y != 0 ? 1.0 / parentScale.y : 1.0,
+                                   parentScale.z != 0 ? 1.0 / parentScale.z : 1.0)
+            mass.scale = SIMD3<Float>(repeating: currentMassScale * massScaleFactor) * inv
+            entity.addChild(mass)
+            massEntity = mass
         }
         return modelEntity
     }
@@ -94,5 +128,33 @@ public final class ProcSpringRenderer {
         let ratio = max(height, 0.01) / safeRest
         let xzScale = entity.scale
         entity.scale = SIMD3<Float>(xzScale.x, scaleFactor * ratio, xzScale.z)
+
+        // Keep the attached mass visually constant size by inverse-scaling it
+        if let mass = massEntity {
+            let parentScale = entity.scale
+            // avoid division by zero
+            let inv = SIMD3<Float>(parentScale.x != 0 ? 1.0 / parentScale.x : 1.0,
+                                   parentScale.y != 0 ? 1.0 / parentScale.y : 1.0,
+                                   parentScale.z != 0 ? 1.0 / parentScale.z : 1.0)
+            // Apply mass scale (cube-root based) and inverse parent scale
+            mass.scale = SIMD3<Float>(repeating: currentMassScale * massScaleFactor) * inv
+            // Ensure mass remains positioned at the bottom of the mesh (local coords)
+            mass.position = [0, -meshHeight, 0]
+        }
+    }
+
+    /// Update the visual size of the attached mass according to the physical mass value.
+    /// Uses cube-root scaling so volume scales with mass.
+    public func updateMass(_ mass: Float) {
+        // Avoid negative/zero
+        let m = max(mass, 1e-6)
+        currentMassScale = pow(m, 1.0 / 3.0)
+        // If the model exists, update the mass entity scale to reflect currentMassScale
+        guard let entity = modelEntity, let massEntity = massEntity else { return }
+        let parentScale = entity.scale
+        let inv = SIMD3<Float>(parentScale.x != 0 ? 1.0 / parentScale.x : 1.0,
+                               parentScale.y != 0 ? 1.0 / parentScale.y : 1.0,
+                               parentScale.z != 0 ? 1.0 / parentScale.z : 1.0)
+        massEntity.scale = SIMD3<Float>(repeating: currentMassScale * massScaleFactor) * inv
     }
 }

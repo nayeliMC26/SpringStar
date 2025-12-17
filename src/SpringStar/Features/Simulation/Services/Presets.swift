@@ -19,30 +19,30 @@ struct Preset {
 }
 
 enum Presets {
-    static func overdamped(mass: Float = 0.1, stiffness: Float = 10) -> Preset {
+    static func overdamped(mass: Float = 1.0, stiffness: Float = 10) -> Preset {
         let cCrit = 2 * sqrt(mass * stiffness)
         let damping = 1.5 * cCrit
-        let params = SystemParams(mass: mass, damping: damping, stiffness: stiffness, restLength: 0.5, forcing: .none
+        let params = SystemParams(mass: mass, damping: 2.0, stiffness: stiffness, restLength: 0.5, forcing: .none
         )
         return Preset(name: "Over", params: params, y0: 0.1, v0: 0)
     }
 
-    static func criticallyDamped(mass: Float = 0.1, stiffness: Float = 10) -> Preset {
+    static func criticallyDamped(mass: Float = 1.0, stiffness: Float = 10) -> Preset {
         let cCrit = 2 * sqrt(mass * stiffness)
         let params = SystemParams(mass: mass, damping: cCrit, stiffness: stiffness, restLength: 0.5, forcing: .none
         )
         return Preset(name: "Crit", params: params, y0: 0.1, v0: 0)
     }
 
-    static func underdamped(mass: Float = 0.1, stiffness: Float = 10) -> Preset {
+    static func underdamped(mass: Float = 1.0, stiffness: Float = 10) -> Preset {
         let cCrit = 2 * sqrt(mass * stiffness)
-        let damping = 0.2 * cCrit
+        let damping = 0.02 * cCrit
         let params = SystemParams(mass: mass, damping: damping, stiffness: stiffness, restLength: 0.5, forcing: .none
         )
         return Preset(name: "Under", params: params, y0: 0.1, v0: 0)
     }
 
-    static func undamped(mass: Float = 0.1, stiffness: Float = 10) -> Preset {
+    static func undamped(mass: Float = 1.0, stiffness: Float = 10) -> Preset {
         let params = SystemParams(
             mass: mass, damping: 0, stiffness: stiffness, restLength: 0.5, forcing: .none
         )

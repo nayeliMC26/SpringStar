@@ -15,6 +15,9 @@ struct SpringStarApp: App {
         WindowGroup {
             ZStack {
                 SimulationView()
+                // just hide the simulation view rather than have it active behind the welcome
+                    .opacity(hasStarted ? 1 : 0)
+                    .allowsHitTesting(hasStarted)
 
                 // Present the welcome overlay until the user starts
                 if !hasStarted {
@@ -29,4 +32,5 @@ struct SpringStarApp: App {
         .windowStyle(.volumetric)
     }
 }
+
 

@@ -36,14 +36,18 @@ struct PlaybackBar: View {
             }
             .buttonStyle(.bordered)
 
-            // Playback scrubber
+            // Use a binding so we get continuous updates
             Slider(
-                value: $viewModel.playbackTime,
-                in: 0...max(viewModel.maxPlaybackTime, 0.01),
+                value: Binding(
+                    get: { viewModel.playbackTime },
+                    set: { newVal in viewModel.scrub(to: newVal) }
+                ),
+                in: 0...max(viewModel.maxPlaybackTime, 10.0),
                 onEditingChanged: { editing in
-                    viewModel.isScrubbing = editing
-                    if !editing {
-                        viewModel.scrub(to: viewModel.playbackTime)
+                    if editing {
+                        viewModel.beginScrub()
+                    } else {
+                        viewModel.endScrub()
                     }
                 }
             )
